@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'el.ui'
+# Form implementation generated from reading ui file 'mainel.ui'
 #
 # Created by: PyQt5 UI code generator 5.9
 #
@@ -52,4 +52,14 @@ class Ui_MainWindow(object):
         self.pushButton.setText(_translate("MainWindow", "Recharger"))
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar"))
 
-from el import QMyWidget
+from mainel import QMyWidget
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+
