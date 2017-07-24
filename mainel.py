@@ -41,11 +41,8 @@ class QMyWidget(QtWidgets.QWidget):
         self.qp.setBrush(QtGui.QColor(128, 64, 32, 100))
         self.qp.setPen(pen)
 
-        x,y = self.transf.map(node.x, node.y)
+        x,y = self.transf.map(node.pos.x, node.pos.y)
         self.qp.drawEllipse(QtCore.QPointF(x,y), 10, 10)
-#        path = QtGui.QPainterPath()
-#        path.addEllipse(QtCore.QPointF(x,y), 10, 10)
-#        self.qp.drawPath(self.transf.map(path))
 
     def paintVertex(self, vertex):
         pen = QtGui.QPen()
@@ -55,10 +52,20 @@ class QMyWidget(QtWidgets.QWidget):
         pen.setStyle(QtCore.Qt.DashDotDotLine)
         self.qp.setPen(pen)
 
-        x1,y1 = self.transf.map(vertex.node1.x, vertex.node1.y)
-        x2,y2 = self.transf.map(vertex.node2.x, vertex.node2.y)
+        x1,y1 = self.transf.map(vertex.node1.pos.x, vertex.node1.pos.y)
+        x2,y2 = self.transf.map(vertex.node2.pos.x, vertex.node2.pos.y)
         self.qp.drawLine(x1, y1, x2, y2)
 
+    def paintArc(self, m1,c1,c2,m2):
+        pen = QtGui.QPen()
+        pen.setWidthF(6)
+        self.qp.setPen(pen)
+
+        path = QtGui.QPainterPath(QtCore.QPointF(m1.x,m1.y))
+        path.cubicTo(c1.x, c1.y, c2.x, c2.y, m2.x, m2.y)
+        self.qp.drawPath(self.transf.map(path))
+
+        
 
     def paintEvent(self, event):
         global myel
@@ -69,6 +76,10 @@ class QMyWidget(QtWidgets.QWidget):
             self.paintNode(node)
         for vertex in myel.vertices:
             self.paintVertex(vertex)
+
+        for m1,c1,c2,m2 in myel.paths:
+            self.paintArc(m1,c1,c2,m2)
+            
         self.stopPainting()
         
 #    def drawText(self, event, text):     
