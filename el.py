@@ -86,23 +86,24 @@ class Vertex:
         #             +
         #             |
         #             |
-        #  pi/4       |     -pi/4
+        #  alpha      |     -alpha
         #         NW  |  NE
         #           + | +
         #             *
         #           + | +
         #         SW  |  SE
-        # 3pi/4       |     -3pi/4
+        # pi-alpha    |     -pi+alpha
         #             |
         #             |
         #             +
         #           node1
         #
         mid = (node1.pos + node2.pos) / 2
-        self.SW = (mid, self.direction( 3*math.pi/4), (self, True ))
-        self.SE = (mid, self.direction(-3*math.pi/4), (self, False))
-        self.NW = (mid, self.direction(   math.pi/4), (self, False))
-        self.NE = (mid, self.direction(  -math.pi/4), (self, True ))
+        alpha = math.pi/4
+        self.SW = (mid, self.direction( math.pi-alpha), (self, True ))
+        self.SE = (mid, self.direction(-math.pi+alpha), (self, False))
+        self.NW = (mid, self.direction(         alpha), (self, False))
+        self.NE = (mid, self.direction(        -alpha), (self, True ))
         
     def begin(self, relativeto):
         if relativeto == self.node1:
