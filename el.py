@@ -9,6 +9,8 @@ class Point:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+    def norm(self):
+        return math.sqrt(self.x**2 + self.y**2)
     def __add__(self, other):
         if not isinstance(other, Point): return NotImplemented
         return Point(self.x+other.x, self.y+other.y)
@@ -84,26 +86,23 @@ class Vertex:
         #             +
         #             |
         #             |
-        #             |
+        #  pi/4       |     -pi/4
         #         NW  |  NE
         #           + | +
         #             *
         #           + | +
         #         SW  |  SE
-        #             |
+        # 3pi/4       |     -3pi/4
         #             |
         #             |
         #             +
         #           node1
-        alpha = math.pi/4
-        gamma = 1.
-        pos1 = node1.pos
-        pos2 = node2.pos
-        mid = (pos1 + pos2) / 2
-        self.SW = (mid, self.controlpoint(pos1, mid, -alpha, gamma), (self, True ))
-        self.SE = (mid, self.controlpoint(pos1, mid,  alpha, gamma), (self, False))
-        self.NW = (mid, self.controlpoint(pos2, mid, +alpha, gamma), (self, False))
-        self.NE = (mid, self.controlpoint(pos2, mid, -alpha, gamma), (self, True ))
+        #
+        mid = (node1.pos + node2.pos) / 2
+        self.SW = (mid, self.direction( 3*math.pi/4), (self, True ))
+        self.SE = (mid, self.direction(-3*math.pi/4), (self, False))
+        self.NW = (mid, self.direction(   math.pi/4), (self, False))
+        self.NE = (mid, self.direction(  -math.pi/4), (self, True ))
         
     def begin(self, relativeto):
         if relativeto == self.node1:
@@ -120,28 +119,15 @@ class Vertex:
         else:
             assert True
 
-    def controlpoint(self, A, B, alpha, gamma):
-        #
-        # A(in)                  B(in)
-        # +----------------------+
-        #                       /
-        #               alpha  /
-        #                     /
-        #                    /
-        #                   +
-        #                   C(out)
-        # ABC = alpha
-        # BC = gamma * AB
-        BA = A - B
-        return B + gamma * BA.rotate(alpha)
+    def direction(self, alpha):
+        v = self.node2.pos - self.node1.pos
+        return v.rotate(alpha)
         
 class EL:
     def __init__(self, nodes, vertices):
         self.nodes = nodes
         self.vertices = vertices
         self._paths = None
-        self.alpha = math.pi/4
-        self.gamma = 1
 
     @property
     def paths(self):
@@ -150,10 +136,10 @@ class EL:
         
         # There is an arc between each middle of adjacent joining segments
         #  an arc is described by its two end points and its two control points
-        # Two examples:
-        #   n2                               n
-        #    +                               + *c1
-        #     \                         c2* /|/
+        # Two examples:                          *c1
+        #   n2                          c2*  n  /
+        #    +                            |  + /
+        #     \                           | /|/
         #      \    c2                    |/ *m1
         #    m2 *--*    c1              m2*  |
         #        \     *                 /   +
@@ -164,14 +150,16 @@ class EL:
         # There is no vertex between v1 and v2 and angle n1/n/n2 is positive.
         # Node n keeps its joining vertices sorted like that.
         
-        # Each vertex knows where are its middle m and control point c
-        # relative to node n for start and end of arcs
+        # Each vertex knows where are its middle m and direction d
+        # relative to node n for begin and end of arcs
+        # The more the two directions are facing the less the control points
+        # are away from middle
         self._paths = []
         for n in self.nodes:
             for i,(n1,v1) in enumerate(n.vertices):
                 n2,v2 = n.vertices[(i+1)%len(n.vertices)]
-                m1,c1,id1 = v1.begin(n)
-                m2,c2,id2 = v2.end(n)
-                self._paths.append((m1,c1,c2,m2))
+                m1,d1,id1 = v1.begin(n)
+                m2,d2,id2 = v2.end(n)
+                self._paths.append((m1,m1+d1,m2+d2,m2))
 
         return self._paths
