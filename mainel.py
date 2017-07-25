@@ -21,6 +21,7 @@ class QMyWidget(QtWidgets.QWidget):
     def startPainting(self):
         self.qp = QtGui.QPainter()
         self.qp.begin(self)
+        self.qp.setRenderHint(QtGui.QPainter.Antialiasing)
 
         assert(self.visible_top>self.visible_bottom and self.visible_left<self.visible_right)
         width = self.visible_right-self.visible_left
@@ -56,9 +57,10 @@ class QMyWidget(QtWidgets.QWidget):
         x2,y2 = self.transf.map(vertex.node2.pos.x, vertex.node2.pos.y)
         self.qp.drawLine(x1, y1, x2, y2)
 
-    def paintArc(self, m1,c1,c2,m2):
+    def paintArc(self, m1,c1,c2,m2, width, color):
         pen = QtGui.QPen()
-        pen.setWidthF(6)
+        pen.setWidthF(width)
+        pen.setColor(color)
         self.qp.setPen(pen)
         self.qp.setBrush(QtCore.Qt.NoBrush)
 
@@ -79,7 +81,9 @@ class QMyWidget(QtWidgets.QWidget):
             self.paintVertex(vertex)
 
         for m1,c1,c2,m2 in myel.paths:
-            self.paintArc(m1,c1,c2,m2)
+            self.paintArc(m1,c1,c2,m2, 19.5, QtCore.Qt.black)
+        for m1,c1,c2,m2 in myel.paths:
+            self.paintArc(m1,c1,c2,m2, 19, QtCore.Qt.white)
             
         self.stopPainting()
         
