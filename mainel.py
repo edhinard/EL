@@ -60,6 +60,7 @@ class QMyWidget(QtWidgets.QWidget):
         pen = QtGui.QPen()
         pen.setWidthF(6)
         self.qp.setPen(pen)
+        self.qp.setBrush(QtCore.Qt.NoBrush)
 
         path = QtGui.QPainterPath(QtCore.QPointF(m1.x,m1.y))
         path.cubicTo(c1.x, c1.y, c2.x, c2.y, m2.x, m2.y)

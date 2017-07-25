@@ -101,9 +101,9 @@ class Vertex:
         pos2 = node2.pos
         mid = (pos1 + pos2) / 2
         self.SW = (mid, self.controlpoint(pos1, mid, -alpha, gamma), (self, True ))
-        self.SE = (mid, self.controlpoint(pos2, mid, -alpha, gamma), (self, True ))
+        self.SE = (mid, self.controlpoint(pos1, mid,  alpha, gamma), (self, False))
         self.NW = (mid, self.controlpoint(pos2, mid, +alpha, gamma), (self, False))
-        self.NE = (mid, self.controlpoint(pos1, mid, +alpha, gamma), (self, False))
+        self.NE = (mid, self.controlpoint(pos2, mid, -alpha, gamma), (self, True ))
         
     def begin(self, relativeto):
         if relativeto == self.node1:
@@ -114,9 +114,9 @@ class Vertex:
             assert True
     def end(self, relativeto):
         if relativeto == self.node1:
-            return self.NW
-        elif relativeto == self.node2:
             return self.SE
+        elif relativeto == self.node2:
+            return self.NW
         else:
             assert True
 
