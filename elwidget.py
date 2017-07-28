@@ -1,12 +1,7 @@
 #! /usr/bin/env python3
 # coding: utf-8
 
-import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
-#designer -qt=4 mainel.ui
-#pyuic5 mainel.ui -x -o mainel_gui.py
-from mainel_gui import Ui_MainWindow
-
 import el
 
 class QMyWidget(QtWidgets.QWidget):
@@ -110,6 +105,7 @@ class QMyWidget(QtWidgets.QWidget):
 #        self.qp.setPen(QtGui.QColor(168, 34, 3))
 #        self.qp.setFont(QtGui.QFont('Decorative', 10))
 #        self.qp.drawText(event.rect(), QtCore.Qt.AlignCenter, text)
+
                 
 nodes = [
     (-50,0),
@@ -123,15 +119,4 @@ vertices = [
     (2,0),
     (2,3)
 ]    
-nodes = [el.Node(*node) for node in nodes]
-vertices = [el.Vertex(nodes[n1], nodes[n2]) for n1,n2 in vertices]
-myel = el.EL(nodes, vertices)
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
-
+myel = el.EL(nodes, vertices, {})

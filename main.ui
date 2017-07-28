@@ -81,7 +81,7 @@
   <customwidget>
    <class>QMyWidget</class>
    <extends>QWidget</extends>
-   <header>mainel</header>
+   <header>elwidget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
