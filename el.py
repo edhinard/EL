@@ -125,10 +125,16 @@ class Vertex:
         return v.rotate(alpha)
         
 class EL:
-    def __init__(self, nodes, vertices):
-        self.nodes = nodes
-        self.vertices = vertices
+    def __init__(self, nodes, vertices, params):
+        self.nodes = [Node(*node) for node in nodes]
+        self.vertices = [Vertex(self.nodes[n1], self.nodes[n2]) for n1,n2 in vertices]
+        self.params = params
         self._paths = None
+
+    def dump(self):
+        nodes = [(node.pos.x, node.pos.y) for node in self.nodes]
+        vertices = [(self.nodes.index(vertex.node1), self.nodes.index(vertex.node2)) for vertex in self.vertices]
+        return nodes,vertices,self.params
 
     @property
     def paths(self):
