@@ -76,7 +76,7 @@ class QMyWidget(QtWidgets.QWidget):
         path.cubicTo(c1.x, c1.y, c2.x, c2.y, m2.x, m2.y)
 
         ps = QtGui.QPainterPathStroker(pen)
-        ps.setWidth(20)
+        ps.setWidth(self.el.params.get('pathwidth',20))
         path = ps.createStroke(path)
 
         self.qp.drawPath(self.transf.map(path))
