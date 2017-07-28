@@ -2,7 +2,6 @@
 # coding: utf-8
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-import el
 
 class QMyWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -12,6 +11,10 @@ class QMyWidget(QtWidgets.QWidget):
         self.visible_bottom = -5
         self.visible_left = -100
         self.visible_right = 160
+        self.el = None
+
+    def setel(self, el):
+        self.el = el
 
     def startPainting(self):
         self.qp = QtGui.QPainter()
@@ -83,20 +86,20 @@ class QMyWidget(QtWidgets.QWidget):
         
 
     def paintEvent(self, event):
-        global myel
-
+        if not self.el:
+            return
         self.startPainting()
 
-        for node in myel.nodes:
+        for node in self.el.nodes:
             self.paintNode(node)
-        for vertex in myel.vertices:
+        for vertex in self.el.vertices:
             self.paintVertex(vertex)
 
-#        for m1,c1,c2,m2 in myel.paths:
+#        for m1,c1,c2,m2 in self.el.paths:
 #            self.paintArc(m1,c1,c2,m2, 19.5, QtCore.Qt.black)
-#        for m1,c1,c2,m2 in myel.paths:
+#        for m1,c1,c2,m2 in self.el.paths:
 #            self.paintArc(m1,c1,c2,m2, 19, QtCore.Qt.white)
-        for m1,c1,c2,m2 in myel.paths:
+        for m1,c1,c2,m2 in self.el.paths:
             self.paintArc2(m1,c1,c2,m2)
             
         self.stopPainting()
@@ -105,18 +108,3 @@ class QMyWidget(QtWidgets.QWidget):
 #        self.qp.setPen(QtGui.QColor(168, 34, 3))
 #        self.qp.setFont(QtGui.QFont('Decorative', 10))
 #        self.qp.drawText(event.rect(), QtCore.Qt.AlignCenter, text)
-
-                
-nodes = [
-    (-50,0),
-    (50,0),
-    (0,86),
-    (0,186)
-]
-vertices = [
-    (0,1),
-    (1,2),
-    (2,0),
-    (2,3)
-]    
-myel = el.EL(nodes, vertices, {})
