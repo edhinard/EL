@@ -7,10 +7,6 @@ class QMyWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.visible_top = 200
-        self.visible_bottom = -5
-        self.visible_left = -100
-        self.visible_right = 160
         self.el = None
 
     def setel(self, el):
@@ -21,14 +17,15 @@ class QMyWidget(QtWidgets.QWidget):
         self.qp.begin(self)
         self.qp.setRenderHint(QtGui.QPainter.Antialiasing)
 
-        assert(self.visible_top>self.visible_bottom and self.visible_left<self.visible_right)
-        width = self.visible_right-self.visible_left
-        height = self.visible_top-self.visible_bottom
+        left, right, top, bottom = self.el.bounds
+        
+        width = right-left
+        height = top-bottom
         scale = min(self.width()/width, self.height()/height)
         self.transf = QtGui.QTransform()
         self.transf.scale(scale,-scale)
-        self.transf.translate(self.width()/2/scale - (self.visible_left+self.visible_right)/2,
-                              -self.height()/2/scale - (self.visible_top+self.visible_bottom)/2)
+        self.transf.translate(self.width()/2/scale - (left+right)/2,
+                              -self.height()/2/scale - (top+bottom)/2)
         
     def stopPainting(self):
         self.qp.end()

@@ -126,6 +126,11 @@ class Vertex:
         
 class EL:
     def __init__(self, nodes, vertices, params):
+        # TODO: verification on validity
+        #  -proper structure
+        #  -at least one vertex
+        #  -raisonable dimensions
+        #  ...
         self.nodes = [Node(*node) for node in nodes]
         self.vertices = [Vertex(self.nodes[n1], self.nodes[n2]) for n1,n2 in vertices]
         self.params = params
@@ -137,10 +142,18 @@ class EL:
         return nodes,vertices,self.params
 
     @property
+    def bounds(self):
+        if not self._paths:
+            dummy = self.paths
+        return self.left, self.right, self.top, self.bottom
+    
+    @property
     def paths(self):
         if self._paths:
             return self._paths
-        
+
+        self.left = self.right = self.nodes[0].pos.x
+        self.top = self.bottom = self.nodes[0].pos.y
         # There is an arc between each middle of adjacent joining segments
         #  an arc is described by its two end points and its two control points
         # Two examples:                          *c1
@@ -167,6 +180,12 @@ class EL:
                 n2,v2 = n.vertices[(i+1)%len(n.vertices)]
                 m1,d1,id1 = v1.begin(n)
                 m2,d2,id2 = v2.end(n)
-                self._paths.append((m1,m1+d1,m2+d2,m2))
+                c1 = m1+d1
+                c2 = m2+d2
+                self._paths.append((m1,c1,c2,m2))
+                self.left = min(self.left, m1.x, c1.x, c2.x, m2.x)
+                self.right = max(self.right, m1.x, c1.x, c2.x, m2.x)
+                self.bottom = min(self.bottom, m1.y, c1.y, c2.y, m2.y)
+                self.top = max(self.top, m1.y, c1.y, c2.y, m2.y)
 
         return self._paths
