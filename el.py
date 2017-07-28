@@ -32,6 +32,24 @@ class Point:
         return Point(
             cosalpha*self.x-sinalpha*self.y,
             sinalpha*self.x+cosalpha*self.y)
+    @staticmethod
+    def det(v, w):
+        return v.x * w.y - v.y * w.x
+    @staticmethod
+    def convergence(A,v,B,w):
+        # A and B point
+        # v and w vectors
+        # returns intersection I of (A,v) (B,w) if:
+        #  - I exists
+        #  - AI and v goes in the same direction
+        #  - BI and w goes in the same direction
+        det = Point.det(v,w)
+        if abs(det)/(v.norm()*w.norm()) < 0.01:
+            return None
+        a = Point.det(w, A-B) / det
+        if a <= 0:
+            return None
+        return A + a * v
 
 class Node:
     def __init__(self, x, y):
@@ -155,37 +173,56 @@ class EL:
         self.left = self.right = self.nodes[0].pos.x
         self.top = self.bottom = self.nodes[0].pos.y
         # There is an arc between each middle of adjacent joining segments
-        #  an arc is described by its two end points and its two control points
-        # Two examples:                          *c1
-        #   n2                          c2*  n  /
+        #  an arc is displayed as a Bezier curve and thus described by its two
+        #  end points and its two control points
+        # Two examples:                          *C1
+        #   n2                          C2*  n  /
         #    +                            |  + /
         #     \                           | /|/
-        #      \    c2                    |/ *m1
-        #    m2 *--*    c1              m2*  |
+        #      \    C2                    |/ *M1
+        #    M2 *--*    C1              M2*  |
         #        \     *                 /   +
         #         \     \               /   n1
         #          +-----*-----+ n1    +
-        #         n         m1         n2
+        #         n         M1         n2
         # Vertices v1(n,n1) and v2(n,n2) are joining in node n
         # There is no vertex between v1 and v2 and angle n1/n/n2 is positive.
         # Node n keeps its joining vertices sorted like that.
         
-        # Each vertex knows where are its middle m and direction d
-        # relative to node n for begin and end of arcs
-        # The more the two directions are facing the less the control points
-        # are away from middle
+        # The control points are computed as C = M + a * D
+        # where:
+        #  - M - middle point
+        #  - D - direction (oriented tangent of arc)
+        #      M and D are given by Vertex.begin(n) and Vertex.end(n)
+        #  - a is tune so as to draw a nice curve without loop or cusp
+        #     There are 3 cases:
+        # if D1 and D2 are converging on point I
+        #  C1(resp. C2) is set to I
+        #
+        # else if vertices v1 and v2 draw a convexity (n is at a top of a peak)
+        #  a must be set in order for the arc to go in the vicinity of n
+        #
+        # else (vertices v1 and v2 draw a concavity (n is in the bottom of a hole)
+        #  a must be big enough for the arc to be smooth
+        #  and small enough to avoid loop/cusp
+        #
+        #
+        #
         self._paths = []
         for n in self.nodes:
             for i,(n1,v1) in enumerate(n.vertices):
                 n2,v2 = n.vertices[(i+1)%len(n.vertices)]
-                m1,d1,id1 = v1.begin(n)
-                m2,d2,id2 = v2.end(n)
-                c1 = m1+d1
-                c2 = m2+d2
-                self._paths.append((m1,c1,c2,m2))
-                self.left = min(self.left, m1.x, c1.x, c2.x, m2.x)
-                self.right = max(self.right, m1.x, c1.x, c2.x, m2.x)
-                self.bottom = min(self.bottom, m1.y, c1.y, c2.y, m2.y)
-                self.top = max(self.top, m1.y, c1.y, c2.y, m2.y)
+                M1,D1,id1 = v1.begin(n)
+                M2,D2,id2 = v2.end(n)
+                C1 = M1+D1
+                C2 = M2+D2
+                I = Point.convergence(M1,D1,M2,D2)
+                if I:
+                    C1 = C2 = I
+                self._paths.append((M1,C1,C2,M2))
+                self.left = min(self.left, M1.x, C1.x, C2.x, M2.x)
+                self.right = max(self.right, M1.x, C1.x, C2.x, M2.x)
+                self.bottom = min(self.bottom, M1.y, C1.y, C2.y, M2.y)
+                self.top = max(self.top, M1.y, C1.y, C2.y, M2.y)
 
         return self._paths
