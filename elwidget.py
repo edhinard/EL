@@ -2,6 +2,7 @@
 # coding: utf-8
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import random
 
 class QMyWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -70,7 +71,8 @@ class QMyWidget(QtWidgets.QWidget):
         pen.setColor(QtCore.Qt.black)
         pen.setCapStyle(QtCore.Qt.FlatCap)
         self.qp.setPen(pen)
-        self.qp.setBrush(QtCore.Qt.white)
+        #self.qp.setBrush(QtCore.Qt.white)
+        self.qp.setBrush(QtGui.QColor(random.randint(0,255), random.randint(0,255), random.randint(0,255)))
 
         path = QtGui.QPainterPath(QtCore.QPointF(m1.x,m1.y))
         path.cubicTo(c1.x, c1.y, c2.x, c2.y, m2.x, m2.y)

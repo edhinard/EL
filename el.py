@@ -66,23 +66,25 @@ class Node:
         # it is a increasing function of that angle
         # from -3pi/4 (-4) to 5pi/4 (+4)
         #
+        #         2           0
         #          \ o=1-X/Y /
         #           \       /
         #        X<-Y\     /X>=Y
         #             \   /
         #              \ /
-        #    o=3+Y/X    +    o=-1-Y/X
+        #    o=3+Y/X    +    o=-1+Y/X
         #              / \
         #             /   \
         #         X<Y/     \X>=-Y
         #           /       \
         #          / o=-3-X/Y\
+        #        +-4         -2
         othernode,vertex = ov
         X = othernode.pos.x - self.pos.x
         Y = othernode.pos.y - self.pos.y
         if X>=Y:
             if X>=-Y:
-                o=-1-Y/X
+                o=-1+Y/X
             else:
                 o=-3-X/Y
         else:
