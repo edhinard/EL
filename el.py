@@ -106,35 +106,38 @@ class Node:
         return o
 
 class Vertex:
-    def __init__(self, node1, node2):
+    def __new__(cls, node1, node2, symbol, params):
+        if symbol == '*':
+            return object.__new__(StarVertex)
+        if symbol == '+':
+            return object.__new__(PlusVertex)
+        if symbol == '=':
+            return object.__new__(EqualVertex)
+        raise Exception("Unknown symbol {!r}".format(symbol))
+
+    def __init__(self, node1, node2, symbol, params):
+        self.params = params
         self.node1 = node1
         self.node2 = node2
         self.node1.addvertex(node2, self)
         self.node2.addvertex(node1, self)
+        self.reset()
 
-        #
-        #           node2
-        #             +
-        #             |
-        #             |
-        #  alpha      |     -alpha
-        #         NW  |  NE
-        #           + | +
-        #             *
-        #           + | +
-        #         SW  |  SE
-        # pi-alpha    |     -pi+alpha
-        #             |
-        #             |
-        #             +
-        #           node1
-        #
-        mid = (node1.pos + node2.pos) / 2
-        alpha = math.pi/4
-        self.SW = (mid, self.direction( math.pi-alpha), (self, True ))
-        self.SE = (mid, self.direction(-math.pi+alpha), (self, False))
-        self.NW = (mid, self.direction(         alpha), (self, False))
-        self.NE = (mid, self.direction(        -alpha), (self, True ))
+    def reset(self):
+            self._NW, self._NE, self._SW, self._SE = self.computepoints()
+
+    @property
+    def NW(self):
+        return self._NW
+    @property
+    def NE(self):
+        return self._NE
+    @property
+    def SW(self):
+        return self._SW
+    @property
+    def SE(self):
+        return self._SE
         
     def begin(self, relativeto):
         if relativeto == self.node1:
@@ -154,7 +157,73 @@ class Vertex:
     def direction(self, alpha):
         v = self.node2.pos - self.node1.pos
         return v.rotate(alpha)
-        
+
+class StarVertex(Vertex):
+    def computepoints(self):
+        #           node2
+        #             +
+        #             |
+        #    alpha    |   -alpha
+        #          NW | NE
+        #             *
+        #          SW | SE
+        #   pi-alpha  |   -pi+alpha
+        #             |
+        #             +
+        #           node1
+        mid = (self.node1.pos + self.node2.pos) / 2
+        alpha = math.pi/180*self.params['alpha']
+        NW = (mid, self.direction(         alpha), (self, False))
+        NE = (mid, self.direction(        -alpha), (self, True ))
+        SW = (mid, self.direction( math.pi-alpha), (self, True ))
+        SE = (mid, self.direction(-math.pi+alpha), (self, False))
+        return NW, NE, SW, SE
+
+class PlusVertex(Vertex):
+    def computepoints(self):
+        #           node2
+        #             +
+        #             |
+        #    pi/2 NW  *  NE -pi/2 ^
+        #             |           |
+        #             |           | plusgap
+        #             |           |
+        #    pi/2 SW  *  SE -pi/2 v
+        #             |
+        #             +
+        #           node1
+        gap = (self.params['plusgap']/2) * (self.node2.pos-self.node1.pos).unit()
+        mid1 = (self.node1.pos + self.node2.pos) / 2 - gap
+        mid2 = (self.node1.pos + self.node2.pos) / 2 + gap
+        alpha = math.pi/2
+        NW = (mid2, self.direction( math.pi/2), (self, True ))
+        NE = (mid2, self.direction(-math.pi/2), (self, True ))
+        SW = (mid1, self.direction( math.pi/2), (self, False))
+        SE = (mid1, self.direction(-math.pi/2), (self, False))
+        return NW, NE, SW, SE
+
+class EqualVertex(Vertex):
+    def computepoints(self):
+        #           node2
+        #             +
+        #             |
+        #          0  |  0
+        #          NW | NE
+        #           * | *
+        #          SW | SE
+        #          pi | -pi
+        #             |
+        #             +
+        #           node1
+        gap = (self.params['equalgap']/2) * (self.node2.pos-self.node1.pos).rotate(math.pi/2).unit()
+        mid1 = (self.node1.pos + self.node2.pos) / 2 - gap
+        mid2 = (self.node1.pos + self.node2.pos) / 2 + gap
+        NW = (mid2, self.direction(0), (self, True ))
+        NE = (mid1, self.direction(0), (self, False ))
+        SW = (mid2, self.direction(math.pi), (self, False))
+        SE = (mid1, self.direction(math.pi), (self, True))
+        return NW, NE, SW, SE
+
 class EL:
     def __init__(self, nodes, vertices, params):
         # TODO: verification on validity
@@ -162,9 +231,9 @@ class EL:
         #  -at least one vertex
         #  -raisonable dimensions
         #  ...
-        self.nodes = [Node(*node) for node in nodes]
-        self.vertices = [Vertex(self.nodes[n1], self.nodes[n2]) for n1,n2 in vertices]
         self.params = params
+        self.nodes = [Node(*node) for node in nodes]
+        self.vertices = [Vertex(self.nodes[n1], self.nodes[n2], symbol, params) for n1,n2,symbol in vertices]
         self._paths = None
 
     def dump(self):
