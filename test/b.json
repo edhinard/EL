@@ -38,6 +38,7 @@
 	"pathwidth":3,
 	"alpha":30,
 	"plusgap":4,
-	"equalgap":4
+	"equalgap":4,
+	"peak":10
     }
 }

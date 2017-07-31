@@ -236,6 +236,11 @@ class EL:
         self.vertices = [Vertex(self.nodes[n1], self.nodes[n2], symbol, params) for n1,n2,symbol in vertices]
         self._paths = None
 
+    def reset(self):
+        self._paths = None
+        for vertex in self.vertices:
+            vertex.reset()
+        
     def dump(self):
         nodes = [(node.pos.x, node.pos.y) for node in self.nodes]
         vertices = [(self.nodes.index(vertex.node1), self.nodes.index(vertex.node2)) for vertex in self.vertices]
@@ -285,7 +290,7 @@ class EL:
                 M2,D2,id2 = v2.end(n)
                 
                 if n1==n2 or Point.det(n1.pos-n.pos, n2.pos-n.pos) < 0: #convexe
-                    A= n.pos+20*((n.pos-n1.pos).unit() + (n.pos-n2.pos).unit())
+                    A= n.pos+self.params['peak']*((n.pos-n1.pos).unit() + (n.pos-n2.pos).unit())
                     C1 = M1+0.3*D1
                     C2 = A+0.3*D1.norm()*(D1.unit()+D2.unit()).unit().rotate(-math.pi/2)
                     self.appendcurve(M1,C1,C2,A)

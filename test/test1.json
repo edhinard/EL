@@ -12,6 +12,8 @@
     "params":{
 	"pathwidth":3,
 	"alpha":45,
-	"plusgap":5
+	"plusgap":5,
+	"equalgap":4,
+	"peak":10
     }
 }
