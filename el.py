@@ -11,15 +11,24 @@ class Point:
         self.y = y
     def norm(self):
         return math.sqrt(self.x**2 + self.y**2)
+    def unit(self):
+        norm = self.norm()
+        return Point(self.x / norm, self.y / norm)
     def __add__(self, other):
         if not isinstance(other, Point): return NotImplemented
         return Point(self.x+other.x, self.y+other.y)
     def __sub__(self, other):
         if not isinstance(other, Point): return NotImplemented
         return Point(self.x-other.x, self.y-other.y)
-    def __mult__(self, mul):
-        if not isinstance(mul, numbers.Number): return NotImplemented
-        return Point(mul*self.x, mul*self.y)
+    def __neg__(self):
+        return Point(-self.x, -self.y)
+    def __mul__(self, mul):
+#        if isinstance(mul, numbers.Number):
+#            return Point(mul*self.x, mul*self.y)
+        if isinstance(mul, Point):
+            return self.x*mul.x + self.y*mul.y
+        else:
+            return NotImplemented
     def __rmul__(self, mul):
         if not isinstance(mul, numbers.Number): return NotImplemented
         return Point(mul*self.x, mul*self.y)
@@ -47,9 +56,11 @@ class Point:
         if abs(det)/(v.norm()*w.norm()) < 0.01:
             return None
         a = Point.det(w, A-B) / det
-        if a <= 0:
+        b = Point.det(v, A-B) / det
+        if a <= 0 or b <=0:
             return None
-        return A + a * v
+        return B + b * w
+#        return A + a * v
 
 class Node:
     def __init__(self, x, y):
@@ -197,34 +208,33 @@ class EL:
         #  - D - direction (oriented tangent of arc)
         #      M and D are given by Vertex.begin(n) and Vertex.end(n)
         #  - a is tune so as to draw a nice curve without loop or cusp
-        #     There are 3 cases:
-        # if D1 and D2 are converging on point I
-        #  C1(resp. C2) is set to I
-        #
-        # else if vertices v1 and v2 draw a convexity (n is at a top of a peak)
-        #  a must be set in order for the arc to go in the vicinity of n
-        #
-        # else (vertices v1 and v2 draw a concavity (n is in the bottom of a hole)
-        #  a must be big enough for the arc to be smooth
-        #  and small enough to avoid loop/cusp
-        #
-        #
-        #
         self._paths = []
         for n in self.nodes:
             for i,(n1,v1) in enumerate(n.vertices):
                 n2,v2 = n.vertices[(i+1)%len(n.vertices)]
                 M1,D1,id1 = v1.begin(n)
                 M2,D2,id2 = v2.end(n)
-                C1 = M1+D1
-                C2 = M2+D2
-                I = Point.convergence(M1,D1,M2,D2)
-                if I:
-                    C1 = C2 = I
-                self._paths.append((M1,C1,C2,M2))
-                self.left = min(self.left, M1.x, C1.x, C2.x, M2.x)
-                self.right = max(self.right, M1.x, C1.x, C2.x, M2.x)
-                self.bottom = min(self.bottom, M1.y, C1.y, C2.y, M2.y)
-                self.top = max(self.top, M1.y, C1.y, C2.y, M2.y)
+                
+                if n1==n2 or Point.det(n1.pos-n.pos, n2.pos-n.pos) < 0: #convexe
+                    A= n.pos+20*((n.pos-n1.pos).unit() + (n.pos-n2.pos).unit())
+                    C1 = M1+0.3*D1
+                    C2 = A+0.3*D1.norm()*(D1.unit()+D2.unit()).unit().rotate(-math.pi/2)
+                    self.appendcurve(M1,C1,C2,A)
+                    C1 = A+0.3*D2.norm()*(D1.unit()+D2.unit()).unit().rotate(math.pi/2)
+                    C2 = M2+0.3*D2
+                    self.appendcurve(A,C1,C2,M2)
+                    continue
+
+                c = (1.3 + (n1.pos-n.pos).unit() * (n.pos-n2.pos).unit())/4                
+                C1 = M1+c*D1
+                C2 = M2+c*D2
+                self.appendcurve(M1,C1,C2,M2)
 
         return self._paths
+
+    def appendcurve(self, P1,C1,C2,P2):
+        self._paths.append((P1,C1,C2,P2))
+        self.left = min(self.left, P1.x, C1.x, C2.x, P2.x)
+        self.right = max(self.right, P1.x, C1.x, C2.x, P2.x)
+        self.bottom = min(self.bottom, P1.y, C1.y, C2.y, P2.y)
+        self.top = max(self.top, P1.y, C1.y, C2.y, P2.y)
