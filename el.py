@@ -3,6 +3,7 @@
 
 import math
 import numbers
+import collections
 
 class Point:
     # and Vector as well
@@ -220,8 +221,8 @@ class EqualVertex(Vertex):
         mid2 = (self.node1.pos + self.node2.pos) / 2 + gap
         NW = (mid2, self.direction(0), (self, True ))
         NE = (mid1, self.direction(0), (self, False ))
-        SW = (mid2, self.direction(math.pi), (self, False))
-        SE = (mid1, self.direction(math.pi), (self, True))
+        SW = (mid2, self.direction(math.pi), (self, True))
+        SE = (mid1, self.direction(math.pi), (self, False))
         return NW, NE, SW, SE
 
 class EL:
@@ -257,8 +258,6 @@ class EL:
         if self._paths:
             return self._paths
 
-        self.left = self.right = self.nodes[0].pos.x
-        self.top = self.bottom = self.nodes[0].pos.y
         # There is an arc between each middle of adjacent joining segments
         #  an arc is displayed as a Bezier curve and thus described by its two
         #  end points and its two control points
@@ -283,6 +282,8 @@ class EL:
         #      M and D are given by Vertex.begin(n) and Vertex.end(n)
         #  - a is tune so as to draw a nice curve without loop or cusp
         self._paths = []
+        Curve = collections.namedtuple('Curve', 'idend arcs')
+        curves = {}
         for n in self.nodes:
             for i,(n1,v1) in enumerate(n.vertices):
                 n2,v2 = n.vertices[(i+1)%len(n.vertices)]
@@ -293,22 +294,49 @@ class EL:
                     A= n.pos+self.params['peak']*((n.pos-n1.pos).unit() + (n.pos-n2.pos).unit())
                     C1 = M1+0.3*D1
                     C2 = A+0.3*D1.norm()*(D1.unit()+D2.unit()).unit().rotate(-math.pi/2)
-                    self.appendcurve(M1,C1,C2,A)
+                    arc1 = (M1,C1,C2,A)
                     C1 = A+0.3*D2.norm()*(D1.unit()+D2.unit()).unit().rotate(math.pi/2)
                     C2 = M2+0.3*D2
-                    self.appendcurve(A,C1,C2,M2)
-                    continue
+                    arc2 = (A,C1,C2,M2)
+                else:
+                    c = (1.3 + (n1.pos-n.pos).unit() * (n.pos-n2.pos).unit())/4                
+                    C1 = M1+c*D1
+                    C2 = M2+c*D2
+                    arc1, arc2 = self.splitarc(M1,C1,C2,M2)
 
-                c = (1.3 + (n1.pos-n.pos).unit() * (n.pos-n2.pos).unit())/4                
-                C1 = M1+c*D1
-                C2 = M2+c*D2
-                self.appendcurve(M1,C1,C2,M2)
 
+                idbegin = id1
+                curve = Curve(id2, [arc1, arc2])
+                while idbegin in curves:
+                    idend,arcs = curves.pop(idbegin)
+                    idbegin = curve.idend
+                    curve.arcs.reverse()
+                    arcs = [*curve.arcs, *arcs]
+                    curve = Curve(idend, arcs)
+                curves[idbegin] = curve
+
+        while curves:
+            idbegin,(idend,arcs) = curves.popitem()
+            if idbegin == idend:
+                self._paths.append(arcs)
+            elif idend in curves:
+                curve = curves.pop(idend)
+                curves[idbegin] = Curve(curve.idend, [*arcs, *curve.arcs])
+            else:
+                arcs.reverse()
+                curves[idend] = Curve(curve.idbegin, arcs)
+
+        self.left = self.right = self.nodes[0].pos.x
+        self.top = self.bottom = self.nodes[0].pos.y
+        for path in self._paths:
+            for P1,C1,C2,P2 in path:
+                self.left = min(self.left, P1.x, C1.x, C2.x, P2.x)
+                self.right = max(self.right, P1.x, C1.x, C2.x, P2.x)
+                self.bottom = min(self.bottom, P1.y, C1.y, C2.y, P2.y)
+                self.top = max(self.top, P1.y, C1.y, C2.y, P2.y)
+                    
         return self._paths
 
-    def appendcurve(self, P1,C1,C2,P2):
-        self._paths.append((P1,C1,C2,P2))
-        self.left = min(self.left, P1.x, C1.x, C2.x, P2.x)
-        self.right = max(self.right, P1.x, C1.x, C2.x, P2.x)
-        self.bottom = min(self.bottom, P1.y, C1.y, C2.y, P2.y)
-        self.top = max(self.top, P1.y, C1.y, C2.y, P2.y)
+    def splitarc(self, P1,C1,C2,P2):
+        return (P1,(P1+C1)/2,(P1+2*C1+C2)/4,(P1+3*C1+3*C2+P2)/8),\
+            ((P1+3*C1+3*C2+P2)/8,(C1+2*C2+P2)/4,(C2+P2)/2,P2)

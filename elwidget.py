@@ -94,12 +94,22 @@ class QMyWidget(QtWidgets.QWidget):
         for vertex in self.el.vertices:
             self.paintVertex(vertex)
 
+        for path in self.el.paths:
+            color = QtGui.QColor(random.randint(0,255), random.randint(0,255), random.randint(0,255))
+            for m1,c1,c2,m2 in path[::4]:
+                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth'], QtCore.Qt.black)
+                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth']-0.5, color)
+            for m1,c1,c2,m2 in path[3::4]:
+                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth'], QtCore.Qt.black)
+                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth']-0.5, color)
+            for m1,c1,c2,m2 in path[1::4]:
+                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth'], QtCore.Qt.black)
+                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth']-0.5, color)
+            for m1,c1,c2,m2 in path[2::4]:
+                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth'], QtCore.Qt.black)
+                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth']-0.5, color)
 #        for m1,c1,c2,m2 in self.el.paths:
-#            self.paintArc(m1,c1,c2,m2, 19.5, QtCore.Qt.black)
-#        for m1,c1,c2,m2 in self.el.paths:
-#            self.paintArc(m1,c1,c2,m2, 19, QtCore.Qt.white)
-        for m1,c1,c2,m2 in self.el.paths:
-            self.paintArc2(m1,c1,c2,m2)
+#            self.paintArc2(m1,c1,c2,m2)
             
         self.stopPainting()
         
