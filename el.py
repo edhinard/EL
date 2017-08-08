@@ -42,6 +42,8 @@ class Point:
         return Point(
             cosalpha*self.x-sinalpha*self.y,
             sinalpha*self.x+cosalpha*self.y)
+    def rotatepi2(self):
+        return Point(-self.y,self.x)
     @staticmethod
     def det(v, w):
         return v.x * w.y - v.y * w.x
