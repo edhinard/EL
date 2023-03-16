@@ -22,11 +22,11 @@ class QMyWidget(QtWidgets.QWidget):
         
         width = right-left
         height = top-bottom
-        scale = min(self.width()/width, self.height()/height)
+        self.scale = min(self.width()/width, self.height()/height)
         self.transf = QtGui.QTransform()
-        self.transf.scale(scale,-scale)
-        self.transf.translate(self.width()/2/scale - (left+right)/2,
-                              -self.height()/2/scale - (top+bottom)/2)
+        self.transf.scale(self.scale,-self.scale)
+        self.transf.translate(self.width()/2/self.scale - (left+right)/2,
+                              -self.height()/2/self.scale - (top+bottom)/2)
         
     def stopPainting(self):
         self.qp.end()
@@ -65,25 +65,6 @@ class QMyWidget(QtWidgets.QWidget):
         path.cubicTo(c1.x, c1.y, c2.x, c2.y, m2.x, m2.y)
         self.qp.drawPath(self.transf.map(path))
         
-    def paintArc2(self, m1,c1,c2,m2):
-        pen = QtGui.QPen()
-        pen.setWidthF(1)
-        pen.setColor(QtCore.Qt.black)
-        pen.setCapStyle(QtCore.Qt.FlatCap)
-        self.qp.setPen(pen)
-        #self.qp.setBrush(QtCore.Qt.white)
-        self.qp.setBrush(QtGui.QColor(random.randint(0,255), random.randint(0,255), random.randint(0,255)))
-
-        path = QtGui.QPainterPath(QtCore.QPointF(m1.x,m1.y))
-        path.cubicTo(c1.x, c1.y, c2.x, c2.y, m2.x, m2.y)
-
-        ps = QtGui.QPainterPathStroker(pen)
-        ps.setWidth(self.el.params.get('pathwidth',20))
-        path = ps.createStroke(path)
-
-        self.qp.drawPath(self.transf.map(path))
-        
-
     def paintEvent(self, event):
         if not self.el:
             return
@@ -94,29 +75,36 @@ class QMyWidget(QtWidgets.QWidget):
         for vertex in self.el.vertices:
             self.paintVertex(vertex)
 
-#        for path in self.el.paths:
-#            color = QtGui.QColor(random.randint(0,255), random.randint(0,255), random.randint(0,255))
-#            for m1,c1,c2,m2 in path[3::4]:
-#                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth'], QtCore.Qt.blue)
-#                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth']-5, color)
-#            for m1,c1,c2,m2 in path[::4]:
-#                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth'], QtCore.Qt.red)
-#                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth']-5, color)
-#            for m1,c1,c2,m2 in path[1::4]:
-#                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth'], QtCore.Qt.yellow)
-#                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth']-5, color)
-#            for m1,c1,c2,m2 in path[2::4]:
-#                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth'], QtCore.Qt.black)
-#                self.paintArc(m1,c1,c2,m2, self.el.params['pathwidth']-5, color)
-
-#        for m1,c1,c2,m2 in self.el.paths:
-#            self.paintArc2(m1,c1,c2,m2)
-
         for path in self.el.paths:
-            for m1,c1,c2,m2 in path:
-                color = QtGui.QColor(random.randint(0,255), random.randint(0,255), random.randint(0,255))
-                self.paintArc(m1,c1,c2,m2,1,color)
-                self.paintArc(*self.offset(m1,c1,c2,m2,10),1,color)
+            color = QtGui.QColor(random.randint(0,255), random.randint(0,255), random.randint(0,255))
+            for m1,c1,c2,m2 in path[3::4]:
+                self.paintArc(m1,c1,c2,m2,(1+self.el.params['pathwidth'])*self.scale,QtCore.Qt.blue)
+                self.paintArc(m1,c1,c2,m2,(0+self.el.params['pathwidth'])*self.scale,color)
+
+            for m1,c1,c2,m2 in path[::4]:
+                self.paintArc(m1,c1,c2,m2,(1+self.el.params['pathwidth'])*self.scale,QtCore.Qt.red)
+                self.paintArc(m1,c1,c2,m2,(0+self.el.params['pathwidth'])*self.scale,color)
+
+            for m1,c1,c2,m2 in path[1::4]:
+                self.paintArc(m1,c1,c2,m2,(1+self.el.params['pathwidth'])*self.scale,QtCore.Qt.yellow)
+
+            for m1,c1,c2,m2 in path[2::4]:
+                self.paintArc(m1,c1,c2,m2,(1+self.el.params['pathwidth'])*self.scale,QtCore.Qt.black)
+
+
+            for m1,c1,c2,m2 in path[1::4]:
+                self.paintArc(m1,c1,c2,m2,(0+self.el.params['pathwidth'])*self.scale,color)
+
+            for m1,c1,c2,m2 in path[2::4]:
+                self.paintArc(m1,c1,c2,m2,(0+self.el.params['pathwidth'])*self.scale,color)
+
+                
+#        for path in self.el.paths:
+#            for m1,c1,c2,m2 in path:
+#                color = QtGui.QColor(random.randint(0,255), random.randint(0,255), random.randint(0,255))
+#                self.paintArc(m1,c1,c2,m2,20,QtCore.Qt.white)
+#                self.paintArc(*self.offset(m1,c1,c2,m2,10),3,color)
+#                self.paintArc(*self.offset(m1,c1,c2,m2,-10),3,color)
 
 
         self.stopPainting()
